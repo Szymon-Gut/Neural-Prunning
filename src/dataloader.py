@@ -24,8 +24,8 @@ class CIFARDatasetFromArrays(Dataset):
         img = self.images[idx]
         label = int(self.labels[idx])
 
-        if isinstance(img, np.ndarray):
-            img = Image.fromarray(img).convert("RGB")
+        img = img.reshape(3, 32, 32).transpose(1, 2, 0)
+        img = Image.fromarray(img.astype(np.uint8)).convert("RGB")
 
         if self.transform:
             img = self.transform(img)
