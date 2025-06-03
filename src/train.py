@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import models
-from src.dataloader import get_imagenet_dataloader
+from src.dataloader import get_cifar_dataloader
 import argparse
 import os
 import wandb
@@ -84,18 +84,11 @@ def train_model(args):
                    name=run_name,
                    entity='sandra-cichocka2000-gdansk-university-of-technology')
 
-    train_loader = get_imagenet_dataloader(
-        os.path.join(args.data_dir, "train"),
+    train_loader, val_loader = get_cifar_dataloader(
+        os.path.join(args.data_dir),
         args.batch_size,
         args.num_workers,
         augment=args.augment
-    )
-
-    val_loader = get_imagenet_dataloader(
-        os.path.join(args.data_dir, "val"),
-        args.batch_size,
-        args.num_workers,
-        augment=False
     )
 
     model_map = {
