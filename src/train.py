@@ -10,6 +10,7 @@ import wandb
 import copy
 from datetime import datetime
 from torch.nn.utils import prune
+from tqdm import tqdm
 
 
 def parse_args():
@@ -17,7 +18,7 @@ def parse_args():
     parser.add_argument("--model_name", type=str, default="resnet50", help="Name of the model to train")
     parser.add_argument("--num_classes", type=int, default=10, help="Number of classes in the dataset")
     parser.add_argument("--data_dir", type=str, required=True, help="Path to the Cifar dataset directory")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training")
+    parser.add_argument("--batch_size", type=int, default=128, help="Batch size for training")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers for data loading")
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs to train")
     parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate for the optimizer")
@@ -61,7 +62,7 @@ def evaluate_model(model, dataloader, device):
     running_loss = 0.0
 
     with torch.no_grad():
-        for images, labels in dataloader:
+        for images, labels in tqdm(dataloader, desc="Evaluating", leave=False):
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             loss = criterion(outputs, labels)
@@ -141,7 +142,7 @@ def train_model(args):
         correct = 0
         total = 0
 
-        for images, labels in train_loader:
+        for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}", leave=False):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(images)
