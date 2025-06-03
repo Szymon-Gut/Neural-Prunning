@@ -13,7 +13,7 @@ from torch.nn.utils import prune
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train a ResNet model on ImageNet dataset")
+    parser = argparse.ArgumentParser(description="Train a ResNet model on Cifar dataset")
     parser.add_argument("--model_name", type=str, default="resnet50", help="Name of the model to train")
     parser.add_argument("--num_classes", type=int, default=10, help="Number of classes in the dataset")
     parser.add_argument("--data_dir", type=str, required=True, help="Path to the ImageNet dataset directory")
