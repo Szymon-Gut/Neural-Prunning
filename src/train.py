@@ -3,12 +3,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import models
-from src.dataloader import get_cifar_dataloader
+from dataloader import get_cifar_dataloader
 import argparse
 import os
 import wandb
 import copy
-import datetime
+from datetime import datetime
 from torch.nn.utils import prune
 
 

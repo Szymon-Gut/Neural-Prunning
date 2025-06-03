@@ -4,14 +4,16 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
+from sklearn.preprocessing import LabelEncoder
 import numpy as np
 
 
 class CIFARDatasetFromArrays(Dataset):
     def __init__(self, images, labels, transform=None):
         self.images = images
-        self.labels = labels
         self.transform = transform
+        self.label_encoder = LabelEncoder()
+        self.labels = self.label_encoder.fit_transform(labels)
 
     def __len__(self):
         return len(self.images)
@@ -21,7 +23,7 @@ class CIFARDatasetFromArrays(Dataset):
         label = int(self.labels[idx])
 
         if isinstance(img, np.ndarray):
-            img = Image.fromarray(img)
+            img = Image.fromarray(img).convert("RGB")
 
         if self.transform:
             img = self.transform(img)
