@@ -9,11 +9,13 @@ import numpy as np
 
 
 class CIFARDatasetFromArrays(Dataset):
-    def __init__(self, images, labels, transform=None):
+    def __init__(self, images, labels, transform=None , encoder=None):
         self.images = images
         self.transform = transform
-        self.label_encoder = LabelEncoder()
-        self.labels = self.label_encoder.fit_transform(labels)
+        self.labels = labels
+        self.encoder = encoder
+        if self.encoder is not None:
+            self.labels = self.encoder.transform(self.labels)
 
     def __len__(self):
         return len(self.images)
@@ -71,8 +73,10 @@ def get_cifar_dataloader(pkl_path: str, batch_size: int = 32, num_workers: int =
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
-    train_dataset = CIFARDatasetFromArrays(X_train, y_train, transform=train_transform)
-    test_dataset = CIFARDatasetFromArrays(X_test, y_test, transform=test_transform)
+    le = LabelEncoder()
+    le.fit(y_train)
+    train_dataset = CIFARDatasetFromArrays(X_train, y_train, transform=train_transform, encoder = le)
+    test_dataset = CIFARDatasetFromArrays(X_test, y_test, transform=test_transform, encoder = le)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
