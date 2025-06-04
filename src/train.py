@@ -31,8 +31,14 @@ def parse_args():
     parser.add_argument("--early_stopping_patience", type=int, default=5, help="Number of epochs with no improvement before stopping")
     parser.add_argument("--prune", action="store_true", help="Apply pruning to the model before training")
     parser.add_argument("--prune_amount", type=float, default=0.3, help="Fraction of parameters to prune (default: 0.3)")
+    parser.add_argument("--activation", type=str, default="relu", choices=["relu", "relu6", "tanh", "sigmoid", "leaky_relu"], help="Activation function to use in the model")
     return parser.parse_args()
 
+def replace_activation(model, new_activation):
+    for name, module in model.named_modules():
+        for child_name, child in module.named_children():
+            if isinstance(child, nn.ReLU):
+                setattr(module, child_name, new_activation)
 
 def apply_pruning(model, amount=0.3):
     for name, module in model.named_modules():
@@ -104,6 +110,20 @@ def train_model(args):
 
     model = model_map[args.model_name](weights="DEFAULT")
     model.fc = nn.Linear(model.fc.in_features, args.num_classes)
+    
+    activation_map = {
+        "relu": nn.ReLU(inplace=True),
+        "relu6": nn.ReLU6(inplace=True),
+        "tanh": nn.Tanh(),
+        "sigmoid": nn.Sigmoid(),
+        "leaky_relu": nn.LeakyReLU(inplace=True)
+    }
+    
+    if args.activation not in activation_map:
+        raise ValueError(f"Unsupported activation: {args.activation}")
+
+    new_activation = activation_map[args.activation]
+    replace_activation(model, new_activation)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
