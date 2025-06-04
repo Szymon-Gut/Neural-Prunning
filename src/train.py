@@ -32,6 +32,7 @@ def parse_args():
     parser.add_argument("--prune", action="store_true", help="Apply pruning to the model before training")
     parser.add_argument("--prune_amount", type=float, default=0.3, help="Fraction of parameters to prune (default: 0.3)")
     parser.add_argument("--activation", type=str, default="relu", choices=["relu", "relu6", "tanh", "sigmoid", "leaky_relu"], help="Activation function to use in the model")
+    parser.add_argument("--dropout", type=float, default=0.0, help="Dropout rate to apply before activation layers (default: 0.0 - no dropout)")
     return parser.parse_args()
 
 def replace_activation(model, new_activation):
@@ -39,6 +40,14 @@ def replace_activation(model, new_activation):
         for child_name, child in module.named_children():
             if isinstance(child, nn.ReLU):
                 setattr(module, child_name, new_activation)
+
+def append_dropout(model, dropout_prob):
+    for name, module in model.named_children():
+        if len(list(module.children())) > 0:
+            append_dropout(module, dropout_prob)
+        if isinstance(module, nn.ReLU):
+                new = nn.Sequential(module, nn.Dropout2d(p=dropout_prob, inplace=True))
+                setattr(model, name, new)
 
 def apply_pruning(model, amount=0.3):
     for name, module in model.named_modules():
@@ -109,6 +118,8 @@ def train_model(args):
         raise ValueError(f"Unsupported model: {args.model_name}")
 
     model = model_map[args.model_name](weights="DEFAULT")
+    if args.dropout:
+        append_dropout(model, args.dropout)
     model.fc = nn.Linear(model.fc.in_features, args.num_classes)
     
     activation_map = {
