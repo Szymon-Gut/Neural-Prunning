@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -33,6 +34,7 @@ def parse_args():
     parser.add_argument("--prune_amount", type=float, default=0.3, help="Fraction of parameters to prune (default: 0.3)")
     parser.add_argument("--activation", type=str, default="relu", choices=["relu", "relu6", "tanh", "sigmoid", "leaky_relu"], help="Activation function to use in the model")
     parser.add_argument("--dropout", type=float, default=0.0, help="Dropout rate to apply before activation layers (default: 0.0 - no dropout)")
+    parser.add_argument("--load_model_path", type=str, default=None, help="Path to a pretrained model checkpoint (.pth)")
     return parser.parse_args()
 
 def replace_activation(model, new_activation):
@@ -139,6 +141,14 @@ def train_model(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
+    if args.load_model_path is not None:
+        if os.path.isfile(args.load_model_path):
+            checkpoint = torch.load(args.load_model_path, map_location=device)
+            model.load_state_dict(checkpoint)
+            print(f"Loaded model weights from {args.load_model_path}")
+        else:
+            raise FileNotFoundError(f"Checkpoint file not found: {args.load_model_path}")
+
     if args.prune:
         model = apply_pruning(model, amount=args.prune_amount)
 
@@ -204,8 +214,8 @@ def train_model(args):
             print(f"\n=== Epizod 1 Statystyki ===")
             print(f"Czas trwania epizodu: {epoch_time:.2f} sekundy")
             print(f"Rozmiar batcha: {args.batch_size}")
-            print(f"Zajętość pamięci GPU: {memory_allocated:.2f} MB")
-            print(f"Liczba trenowalnych parametrów: {total_params:,}")
+            print(f"Zajetosc pamieci GPU: {memory_allocated:.2f} MB")
+            print(f"Liczba trenowalnych parametrow: {total_params:,}")
             print("============================\n")
 
         if args.use_wandb:
