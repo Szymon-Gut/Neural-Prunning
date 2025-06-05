@@ -11,7 +11,7 @@ import copy
 from datetime import datetime
 from torch.nn.utils import prune
 from tqdm import tqdm
-
+import time
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train a ResNet model on Cifar dataset")
@@ -46,8 +46,8 @@ def append_dropout(model, dropout_prob):
         if len(list(module.children())) > 0:
             append_dropout(module, dropout_prob)
         if isinstance(module, nn.ReLU):
-                new = nn.Sequential(module, nn.Dropout2d(p=dropout_prob, inplace=True))
-                setattr(model, name, new)
+            new = nn.Sequential(module, nn.Dropout2d(p=dropout_prob, inplace=True))
+            setattr(model, name, new)
 
 def apply_pruning(model, amount=0.3):
     for name, module in model.named_modules():
@@ -55,7 +55,6 @@ def apply_pruning(model, amount=0.3):
             prune.l1_unstructured(module, name="weight", amount=amount)
     print(f"Pruning applied: {amount * 100:.1f}% of weights in Conv2d and Linear layers.")
     return model
-
 
 def count_sparsity(model):
     total_zeros = 0
@@ -68,6 +67,8 @@ def count_sparsity(model):
     sparsity = 100. * total_zeros / total_elements
     return sparsity
 
+def count_trainable_params(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 def evaluate_model(model, dataloader, device):
     model.eval()
@@ -89,7 +90,6 @@ def evaluate_model(model, dataloader, device):
     avg_loss = running_loss / total
     accuracy = 100. * correct / total
     return avg_loss, accuracy
-
 
 def train_model(args):
     if args.use_wandb:
@@ -168,6 +168,7 @@ def train_model(args):
     epochs_no_improve = 0
 
     for epoch in range(args.epochs):
+        epoch_start_time = time.time()
         model.train()
         running_loss = 0.0
         correct = 0
@@ -194,6 +195,18 @@ def train_model(args):
         print(f"Epoch [{epoch+1}/{args.epochs}] "
               f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% | "
               f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+
+        if epoch == 0:
+            epoch_time = time.time() - epoch_start_time
+            memory_allocated = torch.cuda.memory_allocated(device) / 1024**2 if torch.cuda.is_available() else 0
+            total_params = count_trainable_params(model)
+
+            print(f"\n=== Epizod 1 Statystyki ===")
+            print(f"Czas trwania epizodu: {epoch_time:.2f} sekundy")
+            print(f"Rozmiar batcha: {args.batch_size}")
+            print(f"Zajętość pamięci GPU: {memory_allocated:.2f} MB")
+            print(f"Liczba trenowalnych parametrów: {total_params:,}")
+            print("============================\n")
 
         if args.use_wandb:
             wandb.log({
@@ -228,7 +241,6 @@ def train_model(args):
     
     torch.save(model.state_dict(), args.model_save_path)
     print(f"Model saved to {args.model_save_path}")
-
 
 if __name__ == "__main__":
     args = parse_args()
