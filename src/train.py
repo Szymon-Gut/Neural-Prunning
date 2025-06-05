@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument("--optimizer", type=str, default="adam", choices=["adam", "adamw", "sgd"], help="Optimizer to use for training")
     parser.add_argument("--quantization", action="store_true", help="Apply quantization to the model after training")
     parser.add_argument("--augment", action="store_true", help="Apply data augmentation to training set")
-    parser.add_argument("--wandb_name", type=str, default="resnet_imagenet", help="Name for the Weights & Biases run")
+    parser.add_argument("--wandb_name", type=str, default="resnet_cifar", help="Name for the Weights & Biases run")
     parser.add_argument("--use_wandb", action="store_true", help="Use Weights & Biases for logging")
     parser.add_argument("--model_save_path", type=str, default="resnet_model.pth", help="Path to save the trained model")
     parser.add_argument("--early_stopping_patience", type=int, default=5, help="Number of epochs with no improvement before stopping")
@@ -46,8 +46,8 @@ def append_dropout(model, dropout_prob):
         if len(list(module.children())) > 0:
             append_dropout(module, dropout_prob)
         if isinstance(module, nn.ReLU):
-            new = nn.Sequential(module, nn.Dropout2d(p=dropout_prob, inplace=True))
-            setattr(model, name, new)
+                new = nn.Sequential(module, nn.Dropout2d(p=dropout_prob, inplace=False))
+                setattr(model, name, new)
 
 def apply_pruning(model, amount=0.3):
     for name, module in model.named_modules():
@@ -124,7 +124,7 @@ def train_model(args):
     
     activation_map = {
         "relu": nn.ReLU(inplace=True),
-        "relu6": nn.ReLU6(inplace=True),
+        "relu6": nn.ReLU6(inplace=False),
         "tanh": nn.Tanh(),
         "sigmoid": nn.Sigmoid(),
         "leaky_relu": nn.LeakyReLU(inplace=True)
