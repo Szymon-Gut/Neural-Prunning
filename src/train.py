@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -211,11 +210,11 @@ def train_model(args):
             memory_allocated = torch.cuda.memory_allocated(device) / 1024**2 if torch.cuda.is_available() else 0
             total_params = count_trainable_params(model)
 
-            print(f"\n=== Epizod 1 Statystyki ===")
-            print(f"Czas trwania epizodu: {epoch_time:.2f} sekundy")
-            print(f"Rozmiar batcha: {args.batch_size}")
-            print(f"Zajetosc pamieci GPU: {memory_allocated:.2f} MB")
-            print(f"Liczba trenowalnych parametrow: {total_params:,}")
+            print(f"\n=== Episode 1 Statistics ===")
+            print(f"Duration of episode: {epoch_time:.2f} seconds")
+            print(f"Batch size: {args.batch_size}")
+            print(f"GPU memory usage: {memory_allocated:.2f} MB")
+            print(f"Amount of trainable parameters: {total_params:,}")
             print("============================\n")
 
         if args.use_wandb:

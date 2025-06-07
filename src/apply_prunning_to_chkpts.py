@@ -25,9 +25,9 @@ def build_model_from_name(model_name: str, num_classes: int) -> nn.Module:
         "resnet152": models.resnet152,
     }
     if model_name not in model_map:
-        raise ValueError(f"Nieobsługiwana architektura: {model_name}")
+        raise ValueError(f"Not compatible Architecture: {model_name}")
 
-    model = model_map[model_name](weights=None)  # bez pre-train
+    model = model_map[model_name](weights=None) 
     model.fc = nn.Linear(model.fc.in_features, num_classes)
     return model
 
@@ -38,7 +38,7 @@ def clean_pruned_checkpoints(
 ) -> None:
     checkpoints = glob.glob(pattern)
     if not checkpoints:
-        print("Nie znaleziono modeli do prunningu.")
+        print("Can't find model for prunning.")
         return
 
     for ckpt_path in checkpoints:
@@ -46,7 +46,7 @@ def clean_pruned_checkpoints(
         filename = os.path.basename(ckpt_path)
         m = re.search(r"(resnet\d+)", filename)
         if not m:
-            print("Nie udało się odczytać architektury – pomijam.")
+            print("Unable to load architecture – Skipping.")
             continue
         model_name = m.group(1)
 
@@ -68,7 +68,7 @@ def clean_pruned_checkpoints(
         model.load_state_dict(clean_state, strict=True)
         finalize_pruning(model)
         torch.save(model.state_dict(), filename)
-        print(f"Zapisano model po prunningu - {filename}")
+        print(f"Model after prunning saved to - {filename}")
 
 
 if __name__ == "__main__":
